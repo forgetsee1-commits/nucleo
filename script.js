@@ -104,15 +104,55 @@
   function draw(){
     ctx.clearRect(0, 0, W, H);
 
+       // Зона, где живёт заголовок и поиск — сюда слова не заплывают
+    // Размер подобран так, чтобы покрыть центральный блок с запасом
+    var zoneW = 620;   // ширина «мёртвой зоны»
+    var zoneH = 320;   // высота
+    var zoneX = (W - zoneW) / 2;   // левый край
+    var zoneY = (H - zoneH) / 2 - 40; // верхний край (чуть выше центра)
+    var zonePadding = 30; // мягкий отступ от зоны
+
     for (var i = 0; i < particles.length; i++){
       var p = particles[i];
       p.x += p.vx;
       p.y += p.vy;
 
+      // Отражение от краёв экрана
       if (p.x < 50) { p.x = 50; p.vx = Math.abs(p.vx); }
       if (p.x > W - 50) { p.x = W - 50; p.vx = -Math.abs(p.vx); }
       if (p.y < 25) { p.y = 25; p.vy = Math.abs(p.vy); }
       if (p.y > H - 25) { p.y = H - 25; p.vy = -Math.abs(p.vy); }
+
+      // Отталкивание от «мёртвой зоны»
+      // Проверяем, зашло ли слово в прямоугольник (с запасом)
+      var zx1 = zoneX - zonePadding;
+      var zy1 = zoneY - zonePadding;
+      var zx2 = zoneX + zoneW + zonePadding;
+      var zy2 = zoneY + zoneH + zonePadding;
+
+      if (p.x > zx1 && p.x < zx2 && p.y > zy1 && p.y < zy2){
+        // Считаем, какая сторона ближе — туда и выталкиваем
+        var dLeft   = p.x - zx1;
+        var dRight  = zx2 - p.x;
+        var dTop    = p.y - zy1;
+        var dBottom = zy2 - p.y;
+
+        var minD = Math.min(dLeft, dRight, dTop, dBottom);
+
+        if (minD === dLeft){
+          p.x = zx1;
+          p.vx = -Math.abs(p.vx);
+        } else if (minD === dRight){
+          p.x = zx2;
+          p.vx = Math.abs(p.vx);
+        } else if (minD === dTop){
+          p.y = zy1;
+          p.vy = -Math.abs(p.vy);
+        } else {
+          p.y = zy2;
+          p.vy = Math.abs(p.vy);
+        }
+      }
     }
 
     // Связи
